@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat AI Frontend</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <div id="app-container">
+        <div id="sidebar">
+            <h3>Le tue Chat</h3>
+            <ul id="chat-list">
+                <!-- Le chat verranno caricate qui -->
+            </ul>
+            <button id="new-chat-button">Nuova Chat</button>
+        </div>
+
+        <div id="main-content">
+            <div id="config-section">
+                <h2>Configurazione</h2>
+                <div class="config-item">
+                    <label for="endpoint_url">Endpoint URL:</label>
+                    <input type="text" id="endpoint_url" placeholder="Es: http://localhost:8000/v1">
+                </div>
+                <div class="config-item">
+                    <label for="api_key">API Key:</label>
+                    <input type="password" id="api_key" placeholder="La tua API Key (solo per endpoint locali)">
+                </div>
+                <div class="config-item">
+                    <label for="provider_name">Provider:</label>
+                    <select id="provider_name">
+                        <option value="openai">OpenAI</option>
+                        <option value="anthropic">Anthropic</option>
+                        <option value="custom">Custom</option>
+                        <option value="ollama">Ollama</option>
+                        <option value="lmstudio">LM Studio</option>
+                    </select>
+                </div>
+                <div class="config-item">
+                    <label for="model_name">Modello:</label>
+                    <select id="model_name"></select>
+                </div>
+                <div class="config-item">
+                    <label for="model_type">Tipo di Modello:</label>
+                    <select id="model_type">
+                        <option value="text">Testo</option>
+                        <option value="image">Immagine</option>
+                    </select>
+                </div>
+                <div class="config-item">
+                    <label for="temperature">Temperatura:</label>
+                    <input type="number" id="temperature" step="0.1" min="0" max="2" value="0.7">
+                </div>
+                <div class="config-item">
+                    <label for="max_tokens">Max Tokens:</label>
+                    <input type="number" id="max_tokens" min="1" value="1000">
+                </div>
+                <button id="save-config-button">Salva Configurazione</button>
+            </div>
+
+            <div id="chat-container">
+                <div id="chat-history"></div>
+                <div id="input-area">
+                    <textarea id="user-message" placeholder="Digita il tuo messaggio..." rows="1"></textarea>
+                    <button id="send-button">Invia</button>
+                </div>
+            </div>
+
+            <div id="image-generation-section">
+                <h2>Generazione Immagini</h2>
+                <div class="config-item">
+                    <label for="image_prompt">Prompt Immagine:</label>
+                    <input type="text" id="image_prompt" placeholder="Es: Un simpatico cucciolo di lontra marina">
+                </div>
+                <div class="config-item">
+                    <label for="image_size">Dimensione:</label>
+                    <select id="image_size">
+                        <option value="1024x1024">1024x1024</option>
+                        <option value="1792x1024">1792x1024</option>
+                        <option value="1024x1792">1024x1792</option>
+                    </select>
+                </div>
+                <div class="config-item">
+                    <label for="image_quality">Qualità:</label>
+                    <select id="image_quality">
+                        <option value="standard">Standard</option>
+                        <option value="hd">HD</option>
+                    </select>
+                </div>
+                <button id="generate-image-button">Genera Immagine</button>
+                <div id="image-results"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/chat.js"></script>
+    <script src="assets/js/ui.js"></script>
+    <script src="assets/js/main.js"></script>
+</body>
+</html>

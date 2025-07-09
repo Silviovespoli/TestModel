@@ -1,0 +1,6 @@
+[build]
+  command = "echo 'Build complete'" # Comando di build vuoto per un frontend statico
+  publish = "frontend-app/public" # Directory da pubblicare
+
+[functions]
+  directory = "netlify/functions" # Directory per le Netlify Functions

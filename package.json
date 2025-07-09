@@ -1,0 +1,16 @@
+{
+  "name": "frontend-chat-app",
+  "version": "1.0.0",
+  "description": "A frontend-only chat application",
+  "main": "frontend-app/public/index.html",
+  "scripts": {
+    "start": "echo 'Run this project locally by serving the frontend-app/public directory'",
+    "build": "echo 'Build complete'"
+  },
+  "keywords": ["chat", "ai", "frontend"],
+  "author": "Roo",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.7.2"
+  }
+}

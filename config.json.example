@@ -1,0 +1,38 @@
+{
+  "provider": "openai",
+  "base_url": "https://api.openai.com/v1",
+  "api_key": "your-openai-api-key",
+  "model": "gpt-3.5-turbo",
+  "temperature": 0.7,
+  "max_tokens": 1000
+}
+
+// Esempio configurazione per Anthropic:
+// {
+//   "provider": "anthropic",
+//   "base_url": "https://api.anthropic.com",
+//   "api_key": "your-anthropic-api-key",
+//   "model": "claude-3-5-sonnet-20241022",
+//   "temperature": 0.7,
+//   "max_tokens": 1000
+// }
+
+// Esempio configurazione per Anthropic con endpoint custom:
+// {
+//   "provider": "anthropic",
+//   "base_url": "https://your-custom-anthropic-endpoint.com",
+//   "api_key": "your-anthropic-api-key",
+//   "model": "claude-3-opus-20240229",
+//   "temperature": 0.7,
+//   "max_tokens": 1000
+// }
+
+// Esempio configurazione per Ollama (provider openai):
+// {
+//   "provider": "openai",
+//   "base_url": "http://localhost:11434/v1",
+//   "api_key": "not-needed",
+//   "model": "llama2",
+//   "temperature": 0.7,
+//   "max_tokens": 1000
+// }
