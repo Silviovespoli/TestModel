@@ -44,6 +44,8 @@ function loadChatHistory() {
     // Assicurati che messageCounter sia maggiore di tutti gli ID esistenti
     if (chatHistory.length > 0) {
         messageCounter.set(Math.max(...chatHistory.map(msg => msg.id)) + 1);
+    } else {
+        messageCounter.set(0);
     }
 }
 

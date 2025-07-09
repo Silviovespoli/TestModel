@@ -1,4 +1,4 @@
-import { loadConfig, chatHistory, saveChatHistory, messageIdCounter } from './chat.js';
+import { loadConfig, chatHistory, saveChatHistory, messageCounter } from './chat.js';
 
 export function updateMessageInHistory(id, newMessage) {
     const index = chatHistory.findIndex(msg => msg.id === id);
