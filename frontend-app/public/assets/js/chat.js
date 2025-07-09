@@ -1,7 +1,19 @@
 import { updateMessageInHistory, deleteMessageFromHistory, getModels } from './utils.js';
 
 export let chatHistory = [];
-export let messageIdCounter = 0; // Per assegnare ID unici ai messaggi
+export const messageCounter = {
+    _counter: 0,
+    get current() {
+        return this._counter;
+    },
+    increment() {
+        return this._counter++;
+    },
+    set(value) {
+        this._counter = value;
+    }
+};
+console.log('chat.js: messageCounter esportato:', messageCounter.current);
 
 // Funzioni per la gestione della configurazione
 export function saveConfig() {
@@ -29,20 +41,20 @@ function saveChatHistory() {
 function loadChatHistory() {
     const savedHistory = localStorage.getItem('chatHistory');
     chatHistory = savedHistory ? JSON.parse(savedHistory) : [];
-    // Assicurati che messageIdCounter sia maggiore di tutti gli ID esistenti
+    // Assicurati che messageCounter sia maggiore di tutti gli ID esistenti
     if (chatHistory.length > 0) {
-        messageIdCounter = Math.max(...chatHistory.map(msg => msg.id)) + 1;
+        messageCounter.set(Math.max(...chatHistory.map(msg => msg.id)) + 1);
     }
 }
 
 export function resetChatHistory() {
     chatHistory = [];
-    messageIdCounter = 0;
+    messageCounter.set(0);
     saveChatHistory();
 }
 
 export function addMessageToHistory(message, sender) {
-    const id = messageIdCounter++;
+    const id = messageCounter.increment();
     chatHistory.push({ id, message, sender });
     saveChatHistory();
     return id;

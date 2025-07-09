@@ -1,4 +1,4 @@
-import { saveConfig, loadConfig } from './chat.js';
+import { saveConfig, loadConfig, messageCounter } from './chat.js';
 import { updateMessageInHistory, deleteMessageFromHistory, getModels } from './utils.js';
 
 const chatMessagesDiv = document.getElementById('chatMessages');
