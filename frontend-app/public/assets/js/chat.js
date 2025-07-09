@@ -1,7 +1,7 @@
 import { updateMessageInHistory, deleteMessageFromHistory, getModels } from './utils.js';
 
 export let chatHistory = [];
-let messageIdCounter = 0; // Per assegnare ID unici ai messaggi
+export let messageIdCounter = 0; // Per assegnare ID unici ai messaggi
 
 // Funzioni per la gestione della configurazione
 export function saveConfig() {
