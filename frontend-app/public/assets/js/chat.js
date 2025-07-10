@@ -14,6 +14,7 @@ export const messageCounter = {
     }
 };
 console.log('chat.js: messageCounter esportato:', messageCounter.current);
+console.log('chat.js: Contenuto di chat.js caricato.');
 
 // Funzioni per la gestione della configurazione
 export function saveConfig() {

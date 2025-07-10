@@ -1,4 +1,5 @@
 import { saveConfig, loadConfig, messageCounter } from './chat.js';
+console.log('ui.js: messageCounter importato:', messageCounter);
 import { updateMessageInHistory, deleteMessageFromHistory, getModels } from './utils.js';
 
 const chatMessagesDiv = document.getElementById('chatMessages');
