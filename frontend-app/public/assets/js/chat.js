@@ -35,7 +35,7 @@ export function loadConfig() {
 }
 
 // Funzioni per la gestione della cronologia della chat
-function saveChatHistory() {
+export function saveChatHistory() {
     localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
 }
 
