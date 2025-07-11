@@ -9,6 +9,9 @@
 
 [functions]
   directory = "netlify/functions"
+
+# Configurazione per tutte le functions
+[functions."*"]
   # Timeout per le functions AI (30 secondi)
   timeout = 30
   # Memory allocation per le functions
