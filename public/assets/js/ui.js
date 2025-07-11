@@ -2,8 +2,17 @@
 
 const chatHistoryDiv = document.getElementById('chat-history');
 const chatListUl = document.getElementById('chat-list');
-const userMessageInput = document.getElementById('user-message');
 const imageResultsDiv = document.getElementById('image-results');
+
+// Funzione per sanitizzare il contenuto HTML e prevenire XSS
+function sanitizeHtml(content) {
+    if (typeof content !== 'string') return '';
+    
+    // Crea un elemento temporaneo per la sanitizzazione
+    const tempDiv = document.createElement('div');
+    tempDiv.textContent = content;
+    return tempDiv.innerHTML;
+}
 
 function renderChatHistory(history) {
     chatHistoryDiv.innerHTML = ''; // Clear existing messages
@@ -24,7 +33,8 @@ function appendMessageToUI(message) {
 
     const messageContent = document.createElement('div');
     messageContent.classList.add('message-content');
-    messageContent.textContent = message.content;
+    // Sanitizza il contenuto per prevenire XSS
+    messageContent.innerHTML = sanitizeHtml(message.content);
 
     // Add edit/delete actions for user messages
     if (message.role === 'user') {
@@ -96,7 +106,7 @@ function enableMessageEdit(messageId, messageContentElement) {
     cancelButton.textContent = 'Annulla';
     cancelButton.classList.add('edit-action-button');
     cancelButton.onclick = () => {
-        messageContentElement.textContent = originalContent; // Revert content
+        messageContentElement.innerHTML = sanitizeHtml(originalContent); // Revert content sanitized
         disableMessageEdit(messageContentElement, saveButton, cancelButton);
     };
 
@@ -127,7 +137,8 @@ function renderChatSessions(sessions, currentChatId) {
 
         const chatTitle = document.createElement('span');
         chatTitle.classList.add('chat-title');
-        chatTitle.textContent = session.name;
+        // Sanitizza il nome della chat per prevenire XSS
+        chatTitle.innerHTML = sanitizeHtml(session.name);
         chatTitle.onclick = () => window.chatManager.switchChatSession(session.id);
 
         const actionsDiv = document.createElement('div');
@@ -195,16 +206,32 @@ function clearImageResults() {
     imageResultsDiv.innerHTML = '';
 }
 
-// Auto-resize textarea
-userMessageInput.addEventListener('input', () => {
-    userMessageInput.style.height = 'auto';
-    userMessageInput.style.height = userMessageInput.scrollHeight + 'px';
-});
+// Auto-resize textarea function
+function initializeTextareaAutoResize() {
+    if (window.userMessageInput) {
+        window.userMessageInput.addEventListener('input', () => {
+            window.userMessageInput.style.height = 'auto';
+            window.userMessageInput.style.height = window.userMessageInput.scrollHeight + 'px';
+        });
+    }
+}
 
-// Export UI functions
+// Make function globally accessible
+window.initializeTextareaAutoResize = initializeTextareaAutoResize;
+
+// Funzione per rimuovere un messaggio dalla UI (necessaria per indicatori di caricamento)
+function removeMessageFromUI(messageId) {
+    const messageElement = chatHistoryDiv.querySelector(`[data-message-id="${messageId}"]`);
+    if (messageElement) {
+        messageElement.remove();
+    }
+}
+
+// Export UI functions (con funzione aggiunta)
 window.ui = {
     renderChatHistory,
     appendMessageToUI,
+    removeMessageFromUI, // Aggiunta per supportare ottimizzazioni
     appendImageToUI,
     renderChatSessions,
     updateConfigUI,

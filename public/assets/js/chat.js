@@ -7,16 +7,102 @@ let chatHistory = []; // Messages for the current chat
 const CHAT_SESSIONS_KEY = 'chatAppSessions';
 const CHAT_HISTORY_PREFIX = 'chatHistory_';
 
+// Limite di memoria per localStorage (5MB approssimativo)
+const MAX_LOCALSTORAGE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_CHAT_HISTORY_ENTRIES = 1000; // Massimo 1000 messaggi per chat
+
 function generateUniqueId() {
-    return 'chat_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    // Usa crypto.randomUUID() se disponibile per sicurezza, altrimenti fallback
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return 'chat_' + crypto.randomUUID();
+    }
+    
+    // Fallback sicuro usando crypto.getRandomValues se disponibile
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+        const array = new Uint32Array(2);
+        crypto.getRandomValues(array);
+        return 'chat_' + Date.now() + '_' + array[0].toString(36) + array[1].toString(36);
+    }
+    
+    // Ultima risorsa - metodo originale ma con più entropia
+    return 'chat_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9) + Math.random().toString(36).substr(2, 9);
+}
+
+// Funzione per controllare la dimensione del localStorage
+function getLocalStorageSize() {
+    let total = 0;
+    for (const key in localStorage) {
+        if (localStorage.hasOwnProperty(key)) {
+            total += localStorage[key].length + key.length;
+        }
+    }
+    return total;
+}
+
+// Funzione per pulire localStorage quando si avvicina al limite
+function cleanupLocalStorage() {
+    const currentSize = getLocalStorageSize();
+    
+    if (currentSize > MAX_LOCALSTORAGE_SIZE * 0.8) { // 80% del limite
+        console.warn('localStorage si sta avvicinando al limite, avvio pulizia...');
+        
+        // Ottieni tutte le chat sessions ordinate per timestamp
+        const sessions = [...chatSessions].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        
+        // Rimuovi le chat più vecchie fino a liberare spazio
+        let removedCount = 0;
+        for (const session of sessions) {
+            if (session.id === currentChatId) continue; // Non rimuovere la chat corrente
+            
+            localStorage.removeItem(CHAT_HISTORY_PREFIX + session.id);
+            chatSessions = chatSessions.filter(s => s.id !== session.id);
+            removedCount++;
+            
+            if (getLocalStorageSize() < MAX_LOCALSTORAGE_SIZE * 0.6) { // 60% del limite
+                break;
+            }
+        }
+        
+        if (removedCount > 0) {
+            saveChatSessions();
+            console.log(`Rimossi ${removedCount} chat sessions per liberare spazio`);
+            
+            // Mostra notifica all'utente se disponibile
+            if (typeof window !== 'undefined' && window.chatConfig && window.chatConfig.showNotification) {
+                window.chatConfig.showNotification(`Rimosse ${removedCount} chat vecchie per liberare spazio`, 'info');
+            }
+        }
+    }
+}
+
+// Funzione per limitare la cronologia chat
+function limitChatHistory() {
+    if (chatHistory.length > MAX_CHAT_HISTORY_ENTRIES) {
+        const removed = chatHistory.splice(0, chatHistory.length - MAX_CHAT_HISTORY_ENTRIES);
+        console.log(`Rimossi ${removed.length} messaggi vecchi dalla cronologia`);
+        
+        if (typeof window !== 'undefined' && window.chatConfig && window.chatConfig.showNotification) {
+            window.chatConfig.showNotification(`Rimossi ${removed.length} messaggi vecchi per ottimizzare memoria`, 'info');
+        }
+    }
 }
 
 function saveChatSessions() {
     try {
+        // Controlla spazio disponibile prima di salvare
+        cleanupLocalStorage();
+        
         localStorage.setItem(CHAT_SESSIONS_KEY, JSON.stringify(chatSessions));
         console.log('Sessioni chat salvate.');
     } catch (e) {
         console.error('Errore nel salvataggio delle sessioni chat:', e);
+        
+        if (e.name === 'QuotaExceededError') {
+            console.warn('Quota localStorage superata durante salvataggio sessioni');
+            if (typeof window !== 'undefined' && window.chatConfig && window.chatConfig.showNotification) {
+                window.chatConfig.showNotification('Errore: spazio insufficiente per salvare le sessioni', 'error');
+            }
+        }
     }
 }
 
@@ -39,10 +125,32 @@ function loadChatSessions() {
 function saveCurrentChatHistory() {
     if (currentChatId) {
         try {
+            // Controlla e limita la cronologia prima di salvare
+            limitChatHistory();
+            
+            // Controlla spazio disponibile prima di salvare
+            cleanupLocalStorage();
+            
             localStorage.setItem(CHAT_HISTORY_PREFIX + currentChatId, JSON.stringify(chatHistory));
             console.log(`Cronologia chat per ${currentChatId} salvata.`);
         } catch (e) {
             console.error(`Errore nel salvataggio della cronologia per ${currentChatId}:`, e);
+            
+            // Se fallisce per quota exceeded, prova a fare pulizia e riprova
+            if (e.name === 'QuotaExceededError') {
+                console.warn('Quota localStorage superata, tentativo di pulizia...');
+                cleanupLocalStorage();
+                
+                try {
+                    localStorage.setItem(CHAT_HISTORY_PREFIX + currentChatId, JSON.stringify(chatHistory));
+                    console.log('Salvataggio riuscito dopo pulizia');
+                } catch (e2) {
+                    console.error('Fallimento definitivo nel salvataggio:', e2);
+                    if (typeof window !== 'undefined' && window.chatConfig && window.chatConfig.showNotification) {
+                        window.chatConfig.showNotification('Errore: spazio insufficiente per salvare la cronologia', 'error');
+                    }
+                }
+            }
         }
     }
 }

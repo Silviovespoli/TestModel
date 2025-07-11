@@ -3,6 +3,8 @@
 document.addEventListener('DOMContentLoaded', initializeApp);
 
 const userMessageInput = document.getElementById('user-message');
+// Make userMessageInput globally accessible
+window.userMessageInput = userMessageInput;
 const sendButton = document.getElementById('send-button');
 const saveConfigButton = document.getElementById('save-config-button');
 const newChatButton = document.getElementById('new-chat-button');
@@ -21,9 +23,9 @@ const imageSizeSelect = document.getElementById('image_size');
 const imageQualitySelect = document.getElementById('image_quality');
 
 async function initializeApp() {
-    // Load configuration and chat sessions
-    window.chatConfig.loadConfigFromLocalStorage();
-    window.chatManager.loadChatSessions();
+    // Load configuration and chat sessions sequentially to avoid race condition
+    await window.chatConfig.loadConfigFromLocalStorage();
+    await window.chatManager.loadChatSessions();
 
     // If no chat sessions exist, create a new one
     if (window.chatManager.getChatSessions().length === 0) {
@@ -61,7 +63,7 @@ async function initializeApp() {
 
     // Update config on input change
     endpointUrlInput.addEventListener('change', updateConfigAndFetchModels);
-    apiKeyInput.addEventListener('change', (e) => window.chatConfig.updateConfig({ api_key: e.target.value }));
+    // API key listener rimosso per sicurezza - gestita solo lato server
     providerNameSelect.addEventListener('change', updateConfigAndFetchModels);
     modelNameSelect.addEventListener('change', (e) => window.chatConfig.updateConfig({ model: e.target.value }));
     modelTypeSelect.addEventListener('change', (e) => {
@@ -71,6 +73,11 @@ async function initializeApp() {
     });
     temperatureInput.addEventListener('change', (e) => window.chatConfig.updateConfig({ temperature: parseFloat(e.target.value) }));
     maxTokensInput.addEventListener('change', (e) => window.chatConfig.updateConfig({ max_tokens: parseInt(e.target.value) }));
+
+    // Initialize textarea auto-resize
+    if (window.initializeTextareaAutoResize) {
+        window.initializeTextareaAutoResize();
+    }
 }
 
 async function sendMessage() {
@@ -87,26 +94,67 @@ async function sendMessage() {
         const currentConfig = window.chatConfig.getCurrentConfig();
         const chatHistory = window.chatManager.getChatHistory();
 
+        // Validazione configurazione - API key gestita lato server
+        // Rimossa validazione API key frontend per sicurezza
+
+        if (!currentConfig.model) {
+            const errorMsg = 'Modello non selezionato. Seleziona un modello nella configurazione.';
+            window.ui.appendMessageToUI({ id: window.chatManager.generateUniqueId(), role: 'ai', content: errorMsg });
+            window.chatManager.appendMessage('ai', errorMsg);
+            return;
+        }
+
+        // Mostra indicatore di typing
+        const typingId = window.chatManager.generateUniqueId();
+        window.ui.appendMessageToUI({ id: typingId, role: 'ai', content: '⏳ Elaborazione in corso...' });
+
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ messages: chatHistory, config: currentConfig })
+            body: JSON.stringify({
+                messages: chatHistory,
+                config: currentConfig
+            })
         });
 
+        // Rimuove indicatore di typing
+        window.ui.removeMessageFromUI(typingId);
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
         const data = await response.json();
+        
         if (data.response) {
-            window.ui.appendMessageToUI({ id: window.chatManager.generateUniqueId(), role: 'ai', content: data.response });
-            window.chatManager.appendMessage('ai', data.response);
+            const aiMessageId = window.chatManager.generateUniqueId();
+            window.ui.appendMessageToUI({ id: aiMessageId, role: 'ai', content: data.response });
+            window.chatManager.appendMessage('ai', data.response, aiMessageId);
+            
+            // Log usage se disponibile
+            if (data.usage) {
+                console.log('Token utilizzati:', data.usage);
+            }
         } else {
-            window.ui.appendMessageToUI({ id: window.chatManager.generateUniqueId(), role: 'ai', content: data.error || 'Si è verificato un errore. Riprova più tardi.' });
-            window.chatManager.appendMessage('ai', data.error || 'Si è verificato un errore. Riprova più tardi.');
+            const errorMsg = data.error || 'Si è verificato un errore. Riprova più tardi.';
+            window.ui.appendMessageToUI({ id: window.chatManager.generateUniqueId(), role: 'ai', content: errorMsg });
+            window.chatManager.appendMessage('ai', errorMsg);
         }
     } catch (error) {
         console.error('Errore durante l\'invio del messaggio:', error);
-        window.ui.appendMessageToUI({ id: window.chatManager.generateUniqueId(), role: 'ai', content: 'Si è verificato un errore di rete. Controlla la console per i dettagli.' });
-        window.chatManager.appendMessage('ai', 'Si è verificato un errore di rete. Controlla la console per i dettagli.');
+        const errorMsg = error.message.includes('HTTP')
+            ? `Errore del server: ${error.message}`
+            : 'Si è verificato un errore di rete. Controlla la connessione e riprova.';
+        
+        window.ui.appendMessageToUI({ id: window.chatManager.generateUniqueId(), role: 'ai', content: errorMsg });
+        window.chatManager.appendMessage('ai', errorMsg);
+        
+        // Mostra notifica se disponibile
+        if (window.chatConfig.showNotification) {
+            window.chatConfig.showNotification(errorMsg, 'error');
+        }
     }
 }
 
@@ -154,28 +202,77 @@ async function generateImage() {
     window.chatManager.appendMessage('user', `Genera immagine: "${prompt}" (${size}, ${quality})`);
 
     try {
+        // Mostra indicatore di generazione
+        const generatingId = window.chatManager.generateUniqueId();
+        window.ui.appendMessageToUI({
+            id: generatingId,
+            role: 'ai',
+            content: '🎨 Generazione immagine in corso... Questo può richiedere alcuni minuti.'
+        });
+
         const response = await fetch('/api/generate_image', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ prompt: prompt, size: size, quality: quality, model: currentConfig.model })
+            body: JSON.stringify({
+                prompt: prompt,
+                size: size,
+                quality: quality,
+                model: currentConfig.model || 'dall-e-3'
+            })
         });
 
+        // Rimuove indicatore di generazione
+        window.ui.removeMessageFromUI(generatingId);
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
         const data = await response.json();
+        
         if (data.images && data.images.length > 0) {
+            // Aggiunge le immagini alla UI
             data.images.forEach(url => {
                 window.ui.appendImageToUI(url);
             });
-            window.ui.appendMessageToUI({ id: window.chatManager.generateUniqueId(), role: 'ai', content: `Immagine(i) generata(e) con successo.` });
-            window.chatManager.appendMessage('ai', `Immagine(i) generata(e) con successo.`);
+            
+            const successMsg = `✅ Immagine generata con successo! (${data.size}, ${data.quality})`;
+            window.ui.appendMessageToUI({
+                id: window.chatManager.generateUniqueId(),
+                role: 'ai',
+                content: successMsg
+            });
+            window.chatManager.appendMessage('ai', successMsg);
+            
+            console.log('Immagine generata:', data);
         } else {
-            window.ui.appendMessageToUI({ id: window.chatManager.generateUniqueId(), role: 'ai', content: data.error || 'Errore nella generazione dell\'immagine.' });
-            window.chatManager.appendMessage('ai', data.error || 'Errore nella generazione dell\'immagine.');
+            const errorMsg = data.error || 'Errore nella generazione dell\'immagine.';
+            window.ui.appendMessageToUI({
+                id: window.chatManager.generateUniqueId(),
+                role: 'ai',
+                content: `❌ ${errorMsg}`
+            });
+            window.chatManager.appendMessage('ai', errorMsg);
         }
     } catch (error) {
         console.error('Errore durante la generazione dell\'immagine:', error);
-        window.ui.appendMessageToUI({ id: window.chatManager.generateUniqueId(), role: 'ai', content: 'Si è verificato un errore di rete durante la generazione dell\'immagine. Controlla la console per i dettagli.' });
-        window.chatManager.appendMessage('ai', 'Si è verificato un errore di rete durante la generazione dell\'immagine. Controlla la console per i dettagli.');
+        
+        const errorMsg = error.message.includes('HTTP')
+            ? `Errore del server: ${error.message}`
+            : 'Si è verificato un errore di rete durante la generazione dell\'immagine.';
+            
+        window.ui.appendMessageToUI({
+            id: window.chatManager.generateUniqueId(),
+            role: 'ai',
+            content: `❌ ${errorMsg}`
+        });
+        window.chatManager.appendMessage('ai', errorMsg);
+        
+        // Mostra notifica se disponibile
+        if (window.chatConfig.showNotification) {
+            window.chatConfig.showNotification(errorMsg, 'error');
+        }
     }
 }

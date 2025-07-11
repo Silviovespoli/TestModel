@@ -1,6 +1,101 @@
 [build]
-  command = "echo 'Build complete'" # Comando di build vuoto per un frontend statico
-  publish = "frontend-app/public" # Directory da pubblicare
+  command = "npm run build"
+  publish = "public"
+  
+# Environment variables per development
+[build.environment]
+  NODE_VERSION = "18"
+  NPM_VERSION = "9"
 
 [functions]
-  directory = "netlify/functions" # Directory per le Netlify Functions
+  directory = "netlify/functions"
+  # Timeout per le functions AI (30 secondi)
+  timeout = 30
+  # Memory allocation per le functions
+  memory = 1024
+
+# Configurazione per branch development
+[context.dev]
+  command = "npm run build"
+  
+[context.branch-deploy]
+  command = "npm run build"
+
+# Ottimizzazioni per performance
+[build.processing]
+  skip_processing = false
+
+[build.processing.css]
+  bundle = true
+  minify = true
+
+[build.processing.js]
+  bundle = true
+  minify = true
+
+[build.processing.html]
+  pretty_urls = true
+
+# Headers per sicurezza e performance
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+[[headers]]
+  for = "*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+
+# Redirects per API functions
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+  force = true
+
+# Fallback per SPA
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  conditions = {Role = ["visitor"]}
+
+# Edge Functions per performance (opzionale)
+[[edge_functions]]
+  function = "headers"
+  path = "/*"
+
+# Plugin per ottimizzazioni
+[[plugins]]
+  package = "@netlify/plugin-lighthouse"
+  
+  [plugins.inputs]
+    output_path = "reports/lighthouse.html"
+    
+[[plugins]]
+  package = "netlify-plugin-minify-html"
+  
+  [plugins.inputs]
+    contexts = ["production"]
