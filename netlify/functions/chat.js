@@ -162,6 +162,7 @@ exports.handler = async function(event, context) {
         
         // API Key deve venire da variabile d'ambiente per sicurezza
         let api_key;
+        
         if (provider === 'openai') {
             api_key = process.env.OPENAI_API_KEY;
         } else if (provider === 'anthropic') {

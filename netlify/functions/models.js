@@ -25,7 +25,7 @@ exports.handler = async function(event, context) {
     }
 
     try {
-        const { provider_name, endpoint_url, api_key } = JSON.parse(event.body);
+        const { provider_name, endpoint_url } = JSON.parse(event.body);
 
         if (!provider_name) {
             return {
@@ -37,25 +37,36 @@ exports.handler = async function(event, context) {
 
         let models = [];
         if (provider_name === 'openai') {
-            // Prova chiamata API reale se API key fornita
-            if (api_key) {
+            const apiKey = process.env.OPENAI_API_KEY;
+            const baseURL = endpoint_url || 'https://api.openai.com/v1';
+            
+            if (apiKey) {
                 try {
                     const openai = new OpenAI({
-                        apiKey: api_key,
-                        baseURL: endpoint_url || 'https://api.openai.com/v1'
+                        apiKey: apiKey,
+                        baseURL: baseURL
                     });
                     const response = await openai.models.list();
-                    models = response.data
-                        .filter(model => model.id.includes('gpt') || model.id.includes('dall-e'))
-                        .map(model => model.id)
-                        .sort();
+                    
+                    // Se è l'endpoint ufficiale, filtra solo modelli GPT e DALL-E
+                    if (baseURL.includes('api.openai.com')) {
+                        models = response.data
+                            .filter(model => model.id.includes('gpt') || model.id.includes('dall-e'))
+                            .map(model => model.id)
+                            .sort();
+                    } else {
+                        // Per endpoint custom, prendi tutti i modelli
+                        models = response.data
+                            .map(model => model.id)
+                            .sort();
+                    }
                 } catch (error) {
-                    console.error('Errore recupero modelli OpenAI:', error);
+                    console.error('Errore recupero modelli:', error);
                     // Fallback ai modelli comuni
                     models = ['gpt-4o', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo', 'dall-e-3', 'dall-e-2'];
                 }
             } else {
-                // Lista fallback senza API key
+                // Nessuna API key configurata
                 models = ['gpt-4o', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo', 'dall-e-3', 'dall-e-2'];
             }
         } else if (provider_name === 'anthropic') {
