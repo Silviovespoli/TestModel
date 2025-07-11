@@ -1,0 +1,9 @@
+{
+  "name": "netlify-functions",
+  "version": "1.0.0",
+  "description": "Netlify Functions for Chat AI",
+  "dependencies": {
+    "openai": "^4.20.1",
+    "@anthropic-ai/sdk": "^0.9.1"
+  }
+}

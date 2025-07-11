@@ -1,4 +1,5 @@
 [build]
+  command = "npm run build"
   publish = "public"
   
 # Environment variables per development
@@ -82,7 +83,6 @@
   from = "/*"
   to = "/index.html"
   status = 200
-  conditions = {Role = ["visitor"]}
 
 # Plugin per ottimizzazioni (opzionali - rimuovere se causano problemi)
 # [[plugins]]
