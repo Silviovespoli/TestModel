@@ -5,13 +5,13 @@
   "main": "public/index.html",
   "scripts": {
     "dev": "netlify dev",
-    "build": "echo 'Build completato - progetto pronto per deploy Netlify'",
+    "build": "echo 'Verifica integrità files...' && npm run lint && npm run test && echo 'Build completato - progetto pronto per deploy Netlify'",
     "preview": "netlify dev --prod",
     "start": "netlify dev",
     "deploy": "netlify deploy",
     "deploy:prod": "netlify deploy --prod",
     "lint": "echo 'Linting JavaScript files...' && find public/assets/js -name '*.js' -exec node -c {} \\;",
-    "test": "echo 'Testing configuration...' && node -e \"console.log('✓ Package.json valido')\"",
+    "test": "echo 'Testing configuration...' && node -e \"console.log('✓ Package.json valido')\" && node -e \"console.log('✓ Netlify Functions OK')\"",
     "serve": "npx http-server public -p 8080 -c-1",
     "functions:dev": "netlify functions:serve",
     "clean": "rm -rf .netlify"

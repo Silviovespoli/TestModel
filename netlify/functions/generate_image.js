@@ -32,9 +32,11 @@ exports.handler = async function(event, context) {
 
         if (!apiKey) {
             return {
-                statusCode: 400,
+                statusCode: 500,
                 headers,
-                body: JSON.stringify({ error: 'API Key non configurata' })
+                body: JSON.stringify({ 
+                    error: 'API Key OpenAI non configurata sul server. Verifica le variabili d\'ambiente OPENAI_API_KEY.'
+                })
             };
         }
         if (!prompt) {

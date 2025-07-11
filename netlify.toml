@@ -84,20 +84,15 @@
   status = 200
   conditions = {Role = ["visitor"]}
 
-# Edge Functions per performance (opzionale)
-[[edge_functions]]
-  function = "headers"
-  path = "/*"
-
-# Plugin per ottimizzazioni
-[[plugins]]
-  package = "@netlify/plugin-lighthouse"
-  
-  [plugins.inputs]
-    output_path = "reports/lighthouse.html"
-    
-[[plugins]]
-  package = "netlify-plugin-minify-html"
-  
-  [plugins.inputs]
-    contexts = ["production"]
+# Plugin per ottimizzazioni (opzionali - rimuovere se causano problemi)
+# [[plugins]]
+#   package = "@netlify/plugin-lighthouse"
+#   
+#   [plugins.inputs]
+#     output_path = "reports/lighthouse.html"
+#     
+# [[plugins]]
+#   package = "netlify-plugin-minify-html"
+#   
+#   [plugins.inputs]
+#     contexts = ["production"]

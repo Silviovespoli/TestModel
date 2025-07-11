@@ -161,12 +161,20 @@ exports.handler = async function(event, context) {
         const { provider, model, temperature, max_tokens, base_url } = config;
         
         // API Key deve venire da variabile d'ambiente per sicurezza
-        const api_key = process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY;
+        let api_key;
+        if (provider === 'openai') {
+            api_key = process.env.OPENAI_API_KEY;
+        } else if (provider === 'anthropic') {
+            api_key = process.env.ANTHROPIC_API_KEY;
+        }
+        
         if (!api_key) {
             return {
                 statusCode: 500,
                 headers,
-                body: JSON.stringify({ error: 'API Key non configurata sul server' })
+                body: JSON.stringify({ 
+                    error: `API Key per ${provider} non configurata sul server. Verifica le variabili d'ambiente.`
+                })
             };
         }
 

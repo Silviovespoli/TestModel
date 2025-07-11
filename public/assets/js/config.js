@@ -162,5 +162,6 @@ window.chatConfig = {
     updateConfig,
     loadConfigFromLocalStorage,
     saveConfigToLocalStorage,
-    fetchModels
+    fetchModels,
+    showNotification
 };
