@@ -104,6 +104,25 @@ async function sendMessage() {
             return;
         }
 
+        // Pulisci e valida config prima dell'invio
+        const cleanConfig = {
+            provider: currentConfig.provider,
+            model: currentConfig.model,
+            base_url: currentConfig.base_url,
+            temperature: typeof currentConfig.temperature === 'number' ? currentConfig.temperature : 0.7,
+            max_tokens: typeof currentConfig.max_tokens === 'number' ? currentConfig.max_tokens : 1000
+        };
+
+        // Pulisci messaggi per inviare solo campi richiesti
+        const cleanMessages = chatHistory.map(msg => ({
+            role: msg.role,
+            content: msg.content
+        }));
+
+        // Debug logging
+        console.log('Sending chat request with config:', cleanConfig);
+        console.log('Sending chat request with messages:', cleanMessages);
+
         // Mostra indicatore di typing
         const typingId = window.chatManager.generateUniqueId();
         window.ui.appendMessageToUI({ id: typingId, role: 'ai', content: '⏳ Elaborazione in corso...' });
@@ -114,8 +133,8 @@ async function sendMessage() {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                messages: chatHistory,
-                config: currentConfig
+                messages: cleanMessages,
+                config: cleanConfig
             })
         });
 
@@ -123,7 +142,20 @@ async function sendMessage() {
         window.ui.removeMessageFromUI(typingId);
 
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            let errorData;
+            try {
+                errorData = await response.json();
+                console.error('Server error details:', errorData);
+            } catch (e) {
+                console.error('Failed to parse error response:', e);
+                errorData = { error: response.statusText };
+            }
+            
+            if (errorData.details && Array.isArray(errorData.details)) {
+                throw new Error(`Validation errors: ${errorData.details.join(', ')}`);
+            } else {
+                throw new Error(`HTTP ${response.status}: ${errorData.error || response.statusText}`);
+            }
         }
 
         const data = await response.json();

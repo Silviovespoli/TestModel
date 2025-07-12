@@ -143,7 +143,13 @@ exports.handler = async function(event, context) {
             };
         }
 
-        const { config = {}, messages = [] } = JSON.parse(event.body);
+        const requestBody = JSON.parse(event.body);
+        const { config = {}, messages = [] } = requestBody;
+        
+        // Debug logging
+        console.log('Received request body:', JSON.stringify(requestBody, null, 2));
+        console.log('Config received:', config);
+        console.log('Messages received:', messages);
         
         // Validazione rigorosa degli input
         const validationErrors = validateInputs(config, messages);
