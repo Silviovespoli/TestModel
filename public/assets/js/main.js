@@ -122,6 +122,17 @@ async function sendMessage() {
         // Debug logging
         console.log('Sending chat request with config:', cleanConfig);
         console.log('Sending chat request with messages:', cleanMessages);
+        
+        // Verifica configurazione
+        if (!cleanConfig.provider) {
+            console.error('ERRORE: Provider mancante!');
+            return;
+        }
+        if (!cleanConfig.model) {
+            console.error('ERRORE: Modello mancante!');
+            return;
+        }
+        console.log('Configurazione valida, invio richiesta...');
 
         // Mostra indicatore di typing
         const typingId = window.chatManager.generateUniqueId();
