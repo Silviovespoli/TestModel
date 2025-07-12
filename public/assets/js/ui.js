@@ -1,5 +1,7 @@
 // public/assets/js/ui.js
 
+import { deleteMessage, updateMessage, switchChatSession, renameChatSession, deleteChatSession, createNewChatSession, getChatSessions, getCurrentChatId } from './chat.js';
+
 const chatHistoryDiv = document.getElementById('chat-history');
 const chatListUl = document.getElementById('chat-list');
 const imageResultsDiv = document.getElementById('image-results');
@@ -14,7 +16,7 @@ function sanitizeHtml(content) {
     return tempDiv.innerHTML;
 }
 
-function renderChatHistory(history) {
+export function renderChatHistory(history) {
     chatHistoryDiv.innerHTML = ''; // Clear existing messages
     history.forEach(message => {
         appendMessageToUI(message);
@@ -22,7 +24,7 @@ function renderChatHistory(history) {
     chatHistoryDiv.scrollTop = chatHistoryDiv.scrollHeight; // Scroll to bottom
 }
 
-function appendMessageToUI(message) {
+export function appendMessageToUI(message) {
     const messageWrapper = document.createElement('div');
     messageWrapper.classList.add('message-wrapper', message.role);
     messageWrapper.dataset.messageId = message.id; // Store message ID
@@ -49,8 +51,8 @@ function appendMessageToUI(message) {
         deleteButton.textContent = 'Elimina';
         deleteButton.onclick = () => {
             if (confirm('Sei sicuro di voler eliminare questo messaggio?')) {
-                window.chatManager.deleteMessage(message.id);
-                renderChatHistory(window.chatManager.getChatHistory()); // Re-render chat after deletion
+                deleteMessage(message.id);
+                renderChatHistory(getChatHistory()); // Re-render chat after deletion
             }
         };
 
@@ -65,7 +67,7 @@ function appendMessageToUI(message) {
     chatHistoryDiv.scrollTop = chatHistoryDiv.scrollHeight;
 }
 
-function appendImageToUI(url) {
+export function appendImageToUI(url) {
     const imageElement = document.createElement('img');
     imageElement.src = url;
     imageElement.classList.add('generated-image');
@@ -92,9 +94,9 @@ function enableMessageEdit(messageId, messageContentElement) {
     saveButton.onclick = () => {
         const newContent = messageContentElement.textContent.trim();
         if (newContent !== originalContent) {
-            window.chatManager.updateMessage(messageId, newContent);
+            updateMessage(messageId, newContent);
             // Re-render chat history from this point to reflect changes
-            const updatedHistory = window.chatManager.getChatHistory();
+            const updatedHistory = getChatHistory();
             const messageIndex = updatedHistory.findIndex(msg => msg.id === messageId);
             renderChatHistory(updatedHistory.slice(0, messageIndex + 1)); // Render up to the edited message
             alert('Messaggio modificato. La conversazione è stata troncata da questo punto. Puoi continuare a chattare.');
@@ -127,7 +129,7 @@ function disableMessageEdit(messageContentElement, saveButton, cancelButton) {
     }
 }
 
-function renderChatSessions(sessions, currentChatId) {
+export function renderChatSessions(sessions, currentChatId) {
     chatListUl.innerHTML = '';
     sessions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)); // Sort by most recent
     sessions.forEach(session => {
@@ -139,7 +141,7 @@ function renderChatSessions(sessions, currentChatId) {
         chatTitle.classList.add('chat-title');
         // Sanitizza il nome della chat per prevenire XSS
         chatTitle.innerHTML = sanitizeHtml(session.name);
-        chatTitle.onclick = () => window.chatManager.switchChatSession(session.id);
+        chatTitle.onclick = () => switchChatSession(session.id);
 
         const actionsDiv = document.createElement('div');
         actionsDiv.classList.add('chat-actions');
@@ -150,8 +152,8 @@ function renderChatSessions(sessions, currentChatId) {
             e.stopPropagation(); // Prevent switching chat
             const newName = prompt('Rinomina chat:', session.name);
             if (newName && newName.trim() !== session.name) {
-                window.chatManager.renameChatSession(session.id, newName.trim());
-                renderChatSessions(window.chatManager.getChatSessions(), window.chatManager.getCurrentChatId()); // Re-render list
+                renameChatSession(session.id, newName.trim());
+                renderChatSessions(getChatSessions(), getCurrentChatId()); // Re-render list
             }
         };
 
@@ -160,16 +162,16 @@ function renderChatSessions(sessions, currentChatId) {
         deleteButton.onclick = (e) => {
             e.stopPropagation(); // Prevent switching chat
             if (confirm(`Sei sicuro di voler eliminare la chat "${session.name}"?`)) {
-                window.chatManager.deleteChatSession(session.id);
-                renderChatSessions(window.chatManager.getChatSessions(), window.chatManager.getCurrentChatId()); // Re-render list
-                if (!window.chatManager.getCurrentChatId() && window.chatManager.getChatSessions().length > 0) {
+                deleteChatSession(session.id);
+                renderChatSessions(getChatSessions(), getCurrentChatId()); // Re-render list
+                if (!getCurrentChatId() && getChatSessions().length > 0) {
                     // If current chat was deleted and others exist, switch to the first one
-                    window.chatManager.switchChatSession(window.chatManager.getChatSessions()[0].id);
-                    renderChatHistory(window.chatManager.getChatHistory());
-                } else if (window.chatManager.getChatSessions().length === 0) {
+                    switchChatSession(getChatSessions()[0].id);
+                    renderChatHistory(getChatHistory());
+                } else if (getChatSessions().length === 0) {
                     // If no chats left, create a new one
-                    const newSession = window.chatManager.createNewChatSession();
-                    renderChatSessions(window.chatManager.getChatSessions(), newSession.id);
+                    const newSession = createNewChatSession();
+                    renderChatSessions(getChatSessions(), newSession.id);
                     renderChatHistory([]);
                 }
             }
@@ -184,7 +186,7 @@ function renderChatSessions(sessions, currentChatId) {
     });
 }
 
-function updateConfigUI(config) {
+export function updateConfigUI(config) {
     document.getElementById('endpoint_url').value = config.base_url;
     document.getElementById('api_key').value = config.api_key; // Display for local endpoints
     document.getElementById('provider_name').value = config.provider;
@@ -202,12 +204,12 @@ function updateConfigUI(config) {
     }
 }
 
-function clearImageResults() {
+export function clearImageResults() {
     imageResultsDiv.innerHTML = '';
 }
 
 // Auto-resize textarea function
-function initializeTextareaAutoResize() {
+export function initializeTextareaAutoResize() {
     if (window.userMessageInput) {
         window.userMessageInput.addEventListener('input', () => {
             window.userMessageInput.style.height = 'auto';
@@ -216,24 +218,12 @@ function initializeTextareaAutoResize() {
     }
 }
 
-// Make function globally accessible
-window.initializeTextareaAutoResize = initializeTextareaAutoResize;
-
 // Funzione per rimuovere un messaggio dalla UI (necessaria per indicatori di caricamento)
-function removeMessageFromUI(messageId) {
+export function removeMessageFromUI(messageId) {
     const messageElement = chatHistoryDiv.querySelector(`[data-message-id="${messageId}"]`);
     if (messageElement) {
         messageElement.remove();
     }
 }
 
-// Export UI functions (con funzione aggiunta)
-window.ui = {
-    renderChatHistory,
-    appendMessageToUI,
-    removeMessageFromUI, // Aggiunta per supportare ottimizzazioni
-    appendImageToUI,
-    renderChatSessions,
-    updateConfigUI,
-    clearImageResults
-};
+// Le funzioni sono state esportate singolarmente utilizzando 'export'.

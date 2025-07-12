@@ -1,6 +1,6 @@
 // public/assets/js/config.js
 
-const DEFAULT_CONFIG = {
+export const DEFAULT_CONFIG = {
     provider: 'openai',
     base_url: 'https://api.openai.com/v1',
     // API key rimossa dal frontend per sicurezza - gestita solo lato server
@@ -21,7 +21,7 @@ function saveConfigToLocalStorage() {
     }
 }
 
-function loadConfigFromLocalStorage() {
+export function loadConfigFromLocalStorage() {
     try {
         const savedConfig = localStorage.getItem('chatAppConfig');
         if (savedConfig) {
@@ -36,17 +36,17 @@ function loadConfigFromLocalStorage() {
     }
 }
 
-function getCurrentConfig() {
+export function getCurrentConfig() {
     return { ...currentConfig };
 }
 
-function updateConfig(newValues) {
+export function updateConfig(newValues) {
     currentConfig = { ...currentConfig, ...newValues };
     saveConfigToLocalStorage();
 }
 
 // Funzione ottimizzata per recuperare i modelli dalle Netlify Functions
-async function fetchModels(provider, endpoint, selectedModel = null) {
+export async function fetchModels(provider, endpoint, selectedModel = null) {
     const modelNameSelect = document.getElementById('model_name');
     if (!modelNameSelect) return;
 
@@ -118,7 +118,7 @@ async function fetchModels(provider, endpoint, selectedModel = null) {
 }
 
 // Funzione utility per mostrare notifiche
-function showNotification(message, type = 'info') {
+export function showNotification(message, type = 'info') {
     // Implementazione semplice - può essere espansa
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
@@ -155,13 +155,4 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
-// Esporta le funzioni per renderle disponibili ad altri script
-window.chatConfig = {
-    DEFAULT_CONFIG,
-    getCurrentConfig,
-    updateConfig,
-    loadConfigFromLocalStorage,
-    saveConfigToLocalStorage,
-    fetchModels,
-    showNotification
-};
+// Le funzioni e le costanti vengono esportate singolarmente utilizzando 'export'.

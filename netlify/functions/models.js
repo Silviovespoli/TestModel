@@ -66,8 +66,8 @@ exports.handler = async function(event, context) {
                     models = ['gpt-4o', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo', 'dall-e-3', 'dall-e-2'];
                 }
             } else {
-                // Nessuna API key configurata
-                models = ['gpt-4o', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo', 'dall-e-3', 'dall-e-2'];
+                // Nessuna API key configurata, restituisce un array vuoto
+                models = [];
             }
         } else if (provider_name === 'anthropic') {
             // Modelli Claude aggiornati (no API pubblica per elenco)

@@ -1,5 +1,7 @@
 // public/assets/js/chat.js
 
+import { showNotification } from './config.js';
+
 let currentChatId = null;
 let chatSessions = []; // [{ id: 'uuid', name: 'Chat Name', timestamp: 'ISOString' }]
 let chatHistory = []; // Messages for the current chat
@@ -11,7 +13,7 @@ const CHAT_HISTORY_PREFIX = 'chatHistory_';
 const MAX_LOCALSTORAGE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_CHAT_HISTORY_ENTRIES = 1000; // Massimo 1000 messaggi per chat
 
-function generateUniqueId() {
+export function generateUniqueId() {
     // Usa crypto.randomUUID() se disponibile per sicurezza, altrimenti fallback
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
         return 'chat_' + crypto.randomUUID();
@@ -68,9 +70,7 @@ function cleanupLocalStorage() {
             console.log(`Rimossi ${removedCount} chat sessions per liberare spazio`);
             
             // Mostra notifica all'utente se disponibile
-            if (typeof window !== 'undefined' && window.chatConfig && window.chatConfig.showNotification) {
-                window.chatConfig.showNotification(`Rimosse ${removedCount} chat vecchie per liberare spazio`, 'info');
-            }
+            showNotification(`Rimosse ${removedCount} chat vecchie per liberare spazio`, 'info');
         }
     }
 }
@@ -81,13 +81,11 @@ function limitChatHistory() {
         const removed = chatHistory.splice(0, chatHistory.length - MAX_CHAT_HISTORY_ENTRIES);
         console.log(`Rimossi ${removed.length} messaggi vecchi dalla cronologia`);
         
-        if (typeof window !== 'undefined' && window.chatConfig && window.chatConfig.showNotification) {
-            window.chatConfig.showNotification(`Rimossi ${removed.length} messaggi vecchi per ottimizzare memoria`, 'info');
-        }
+        showNotification(`Rimossi ${removed.length} messaggi vecchi per ottimizzare memoria`, 'info');
     }
 }
 
-function saveChatSessions() {
+export function saveChatSessions() {
     try {
         // Controlla spazio disponibile prima di salvare
         cleanupLocalStorage();
@@ -99,14 +97,12 @@ function saveChatSessions() {
         
         if (e.name === 'QuotaExceededError') {
             console.warn('Quota localStorage superata durante salvataggio sessioni');
-            if (typeof window !== 'undefined' && window.chatConfig && window.chatConfig.showNotification) {
-                window.chatConfig.showNotification('Errore: spazio insufficiente per salvare le sessioni', 'error');
-            }
+            showNotification('Errore: spazio insufficiente per salvare le sessioni', 'error');
         }
     }
 }
 
-function loadChatSessions() {
+export function loadChatSessions() {
     try {
         const savedSessions = localStorage.getItem(CHAT_SESSIONS_KEY);
         if (savedSessions) {
@@ -122,7 +118,7 @@ function loadChatSessions() {
     }
 }
 
-function saveCurrentChatHistory() {
+export function saveCurrentChatHistory() {
     if (currentChatId) {
         try {
             // Controlla e limita la cronologia prima di salvare
@@ -146,16 +142,14 @@ function saveCurrentChatHistory() {
                     console.log('Salvataggio riuscito dopo pulizia');
                 } catch (e2) {
                     console.error('Fallimento definitivo nel salvataggio:', e2);
-                    if (typeof window !== 'undefined' && window.chatConfig && window.chatConfig.showNotification) {
-                        window.chatConfig.showNotification('Errore: spazio insufficiente per salvare la cronologia', 'error');
-                    }
+                    showNotification('Errore: spazio insufficiente per salvare la cronologia', 'error');
                 }
             }
         }
     }
 }
 
-function loadChatHistory(chatId) {
+export function loadChatHistory(chatId) {
     try {
         const savedHistory = localStorage.getItem(CHAT_HISTORY_PREFIX + chatId);
         if (savedHistory) {
@@ -172,7 +166,7 @@ function loadChatHistory(chatId) {
     return chatHistory;
 }
 
-function createNewChatSession() {
+export function createNewChatSession() {
     if (currentChatId) {
         saveCurrentChatHistory(); // Save current chat before switching
     }
@@ -187,7 +181,7 @@ function createNewChatSession() {
     return newSession;
 }
 
-function switchChatSession(chatId) {
+export function switchChatSession(chatId) {
     if (currentChatId && currentChatId !== chatId) {
         saveCurrentChatHistory(); // Save the chat we are leaving
     }
@@ -196,7 +190,7 @@ function switchChatSession(chatId) {
     // UI will be updated by ui.js
 }
 
-function deleteChatSession(chatId) {
+export function deleteChatSession(chatId) {
     chatSessions = chatSessions.filter(session => session.id !== chatId);
     saveChatSessions();
     localStorage.removeItem(CHAT_HISTORY_PREFIX + chatId);
@@ -207,7 +201,7 @@ function deleteChatSession(chatId) {
     console.log(`Chat session ${chatId} deleted.`);
 }
 
-function renameChatSession(chatId, newName) {
+export function renameChatSession(chatId, newName) {
     const session = chatSessions.find(s => s.id === chatId);
     if (session) {
         session.name = newName;
@@ -217,14 +211,14 @@ function renameChatSession(chatId, newName) {
     }
 }
 
-function appendMessage(role, content, messageId = generateUniqueId()) {
+export function appendMessage(role, content, messageId = generateUniqueId()) {
     const message = { id: messageId, role, content, timestamp: new Date().toISOString() };
     chatHistory.push(message);
     saveCurrentChatHistory();
     return message; // Return the message object for UI rendering
 }
 
-function deleteMessage(messageId) {
+export function deleteMessage(messageId) {
     const initialLength = chatHistory.length;
     chatHistory = chatHistory.filter(msg => msg.id !== messageId);
     if (chatHistory.length < initialLength) {
@@ -235,7 +229,7 @@ function deleteMessage(messageId) {
     return false;
 }
 
-function updateMessage(messageId, newContent) {
+export function updateMessage(messageId, newContent) {
     const messageIndex = chatHistory.findIndex(msg => msg.id === messageId);
     if (messageIndex !== -1) {
         chatHistory[messageIndex].content = newContent;
@@ -248,33 +242,16 @@ function updateMessage(messageId, newContent) {
     return false;
 }
 
-function getChatHistory() {
+export function getChatHistory() {
     return [...chatHistory]; // Return a copy
 }
 
-function getCurrentChatId() {
+export function getCurrentChatId() {
     return currentChatId;
 }
 
-function getChatSessions() {
+export function getChatSessions() {
     return [...chatSessions]; // Return a copy
 }
 
-// Export functions for global access
-window.chatManager = {
-    generateUniqueId,
-    saveChatSessions,
-    loadChatSessions,
-    saveCurrentChatHistory,
-    loadChatHistory,
-    createNewChatSession,
-    switchChatSession,
-    deleteChatSession,
-    renameChatSession,
-    appendMessage,
-    deleteMessage, // Aggiunto
-    updateMessage,
-    getChatHistory,
-    getCurrentChatId,
-    getChatSessions
-};
+// Le funzioni sono state esportate singolarmente utilizzando 'export'.

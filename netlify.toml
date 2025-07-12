@@ -24,6 +24,10 @@
 [context.branch-deploy]
   publish = "public"
 
+[dev]
+  framework = "#static"
+  publish = "public"
+
 # Ottimizzazioni per performance
 [build.processing]
   skip_processing = false
