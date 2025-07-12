@@ -227,3 +227,13 @@ export function removeMessageFromUI(messageId) {
 }
 
 // Le funzioni sono state esportate singolarmente utilizzando 'export'.
+export function initializeHamburgerMenu() {
+    const hamburger = document.getElementById('hamburger-menu');
+    const appContainer = document.getElementById('app-container');
+
+    if (hamburger && appContainer) {
+        hamburger.addEventListener('click', () => {
+            appContainer.classList.toggle('sidebar-open');
+        });
+    }
+}

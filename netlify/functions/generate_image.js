@@ -24,12 +24,10 @@ exports.handler = async function(event, context) {
     }
 
     try {
-        const { prompt, size = "1024x1024", quality = "standard", model = "dall-e-3" } = JSON.parse(event.body);
+        const { prompt, size = "1024x1024", quality = "standard", model = "dall-e-3", openai_endpoint } = JSON.parse(event.body);
 
         // Recupera configurazione dalla richiesta o variabili ambiente
         const apiKey = process.env.OPENAI_API_KEY; // Meglio usare variabili ambiente per sicurezza
-        console.log('Verifica Chiave API (parziale):', apiKey ? `${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)}` : 'CHIAVE NON TROVATA');
-        const endpoint = process.env.OPENAI_ENDPOINT || 'https://api.openai.com/v1';
 
         if (!apiKey) {
             return {
@@ -48,10 +46,15 @@ exports.handler = async function(event, context) {
             };
         }
 
-        const openai = new OpenAI({
+        const openaiConfig = {
             apiKey: apiKey,
-            baseURL: endpoint
-        });
+        };
+
+        if (openai_endpoint && typeof openai_endpoint === 'string') {
+            openaiConfig.baseURL = openai_endpoint;
+        }
+
+        const openai = new OpenAI(openaiConfig);
 
         const imageParams = {
             model: model,

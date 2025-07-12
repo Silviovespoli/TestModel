@@ -83,6 +83,7 @@ async function initializeApp() {
 
     // Initialize textarea auto-resize
     ui.initializeTextareaAutoResize();
+    ui.initializeHamburgerMenu();
 }
 
 async function sendMessage() {
@@ -265,7 +266,8 @@ async function generateImage() {
                 prompt: prompt,
                 size: size,
                 quality: quality,
-                model: currentConfig.model || 'dall-e-3'
+                model: currentConfig.model || 'dall-e-3',
+                openai_endpoint: currentConfig.base_url
             })
         });
 
