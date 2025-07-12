@@ -1,6 +1,6 @@
 // public/assets/js/ui.js
 
-import { deleteMessage, updateMessage, switchChatSession, renameChatSession, deleteChatSession, createNewChatSession, getChatSessions, getCurrentChatId } from './chat.js';
+import { deleteMessage, updateMessage, switchChatSession, renameChatSession, deleteChatSession, createNewChatSession, getChatSessions, getCurrentChatId, getChatHistory } from './chat.js';
 
 const chatHistoryDiv = document.getElementById('chat-history');
 const chatListUl = document.getElementById('chat-list');
