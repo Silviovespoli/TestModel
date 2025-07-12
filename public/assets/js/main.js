@@ -1,6 +1,13 @@
 // public/assets/js/main.js
 
-import * as chatConfig from './config.js';
+import {
+    loadConfigFromLocalStorage,
+    getCurrentConfig,
+    fetchModels,
+    updateConfig,
+    showNotification,
+    saveConfigToLocalStorage
+} from './config.js';
 import * as ui from './ui.js';
 import * as chatManager from './chat.js';
 
@@ -24,7 +31,7 @@ const imageQualitySelect = document.getElementById('image_quality');
 
 async function initializeApp() {
     // Load configuration and chat sessions sequentially to avoid race condition
-    await chatConfig.loadConfigFromLocalStorage();
+    await loadConfigFromLocalStorage();
     await chatManager.loadChatSessions();
 
     // If no chat sessions exist, create a new one
@@ -37,9 +44,9 @@ async function initializeApp() {
     }
 
     // Populate UI with current config and chat history
-    const currentConfig = chatConfig.getCurrentConfig();
+    const currentConfig = getCurrentConfig();
     ui.updateConfigUI(currentConfig);
-    await chatConfig.fetchModels(currentConfig.provider, currentConfig.base_url, currentConfig.model);
+    await fetchModels(currentConfig.provider, currentConfig.base_url, currentConfig.model);
     ui.renderChatHistory(chatManager.getChatHistory());
     ui.renderChatSessions(chatManager.getChatSessions(), chatManager.getCurrentChatId());
 
@@ -65,14 +72,14 @@ async function initializeApp() {
     endpointUrlInput.addEventListener('change', updateConfigAndFetchModels);
     // API key listener rimosso per sicurezza - gestita solo lato server
     providerNameSelect.addEventListener('change', updateConfigAndFetchModels);
-    modelNameSelect.addEventListener('change', (e) => chatConfig.updateConfig({ model: e.target.value }));
+    modelNameSelect.addEventListener('change', (e) => updateConfig({ model: e.target.value }));
     modelTypeSelect.addEventListener('change', (e) => {
         const isImage = e.target.value === 'image';
-        chatConfig.updateConfig({ is_image_model: isImage });
-        ui.updateConfigUI(chatConfig.getCurrentConfig()); // Re-render to show/hide image section
+        updateConfig({ is_image_model: isImage });
+        ui.updateConfigUI(getCurrentConfig()); // Re-render to show/hide image section
     });
-    temperatureInput.addEventListener('change', (e) => chatConfig.updateConfig({ temperature: parseFloat(e.target.value) }));
-    maxTokensInput.addEventListener('change', (e) => chatConfig.updateConfig({ max_tokens: parseInt(e.target.value) }));
+    temperatureInput.addEventListener('change', (e) => updateConfig({ temperature: parseFloat(e.target.value) }));
+    maxTokensInput.addEventListener('change', (e) => updateConfig({ max_tokens: parseInt(e.target.value) }));
 
     // Initialize textarea auto-resize
     ui.initializeTextareaAutoResize();
@@ -89,7 +96,7 @@ async function sendMessage() {
     userMessageInput.style.height = 'auto'; // Reset textarea height
 
     try {
-        const currentConfig = chatConfig.getCurrentConfig();
+        const currentConfig = getCurrentConfig();
         const chatHistory = chatManager.getChatHistory();
 
         // Validazione configurazione - API key gestita lato server
@@ -193,13 +200,13 @@ async function sendMessage() {
         chatManager.appendMessage('ai', errorMsg);
         
         // Mostra notifica se disponibile
-        chatConfig.showNotification(errorMsg, 'error');
+        showNotification(errorMsg, 'error');
     }
 }
 
 async function saveConfiguration() {
     // Config is already updated on input change, just save to localStorage
-    chatConfig.saveConfigToLocalStorage();
+    saveConfigToLocalStorage();
     alert('Configurazione salvata con successo!');
 }
 
@@ -208,9 +215,9 @@ async function updateConfigAndFetchModels() {
         provider: providerNameSelect.value,
         base_url: endpointUrlInput.value,
     };
-    chatConfig.updateConfig(newConfigValues);
-    const currentConfig = chatConfig.getCurrentConfig();
-    await chatConfig.fetchModels(currentConfig.provider, currentConfig.base_url, currentConfig.model);
+    updateConfig(newConfigValues);
+    const currentConfig = getCurrentConfig();
+    await fetchModels(currentConfig.provider, currentConfig.base_url, currentConfig.model);
 }
 
 function handleNewChat() {
@@ -225,7 +232,7 @@ async function generateImage() {
     const prompt = imagePromptInput.value.trim();
     const size = imageSizeSelect.value;
     const quality = imageQualitySelect.value;
-    const currentConfig = chatConfig.getCurrentConfig();
+    const currentConfig = getCurrentConfig();
 
     if (prompt === '') {
         alert('Inserisci un prompt per generare l\'immagine.');
@@ -310,7 +317,7 @@ async function generateImage() {
         chatManager.appendMessage('ai', errorMsg);
         
         // Mostra notifica se disponibile
-        chatConfig.showNotification(errorMsg, 'error');
+        showNotification(errorMsg, 'error');
     }
 }
 
