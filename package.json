@@ -1,6 +1,6 @@
 {
   "name": "chat-ai-avanzata",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Chat AI avanzata - Netlify Static Site con Functions serverless per OpenAI e Anthropic",
   "main": "public/index.html",
   "scripts": {
