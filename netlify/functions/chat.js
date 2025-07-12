@@ -35,10 +35,10 @@ function validateInputs(config, messages) {
         }
     }
     
-    // Validazione max_tokens
+    // Validazione max_tokens - aumentato limite per endpoint custom
     if (max_tokens !== undefined) {
-        if (typeof max_tokens !== 'number' || max_tokens < 1 || max_tokens > 4000) {
-            errors.push('Max tokens deve essere un numero tra 1 e 4000');
+        if (typeof max_tokens !== 'number' || max_tokens < 1 || max_tokens > 100000) {
+            errors.push('Max tokens deve essere un numero tra 1 e 100000');
         }
     }
     
