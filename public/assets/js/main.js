@@ -113,9 +113,9 @@ async function sendMessage() {
             max_tokens: typeof currentConfig.max_tokens === 'number' ? currentConfig.max_tokens : 1000
         };
 
-        // Pulisci messaggi per inviare solo campi richiesti
+        // Pulisci messaggi per inviare solo campi richiesti e converti 'ai' in 'assistant'
         const cleanMessages = chatHistory.map(msg => ({
-            role: msg.role,
+            role: msg.role === 'ai' ? 'assistant' : msg.role,
             content: msg.content
         }));
 
