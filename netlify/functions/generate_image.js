@@ -28,6 +28,7 @@ exports.handler = async function(event, context) {
 
         // Recupera configurazione dalla richiesta o variabili ambiente
         const apiKey = process.env.OPENAI_API_KEY; // Meglio usare variabili ambiente per sicurezza
+        console.log('Verifica Chiave API (parziale):', apiKey ? `${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)}` : 'CHIAVE NON TROVATA');
         const endpoint = process.env.OPENAI_ENDPOINT || 'https://api.openai.com/v1';
 
         if (!apiKey) {
@@ -64,7 +65,6 @@ exports.handler = async function(event, context) {
             imageParams.quality = quality;
         }
 
-        console.log('Invio richiesta a OpenAI con i seguenti parametri:', imageParams);
         const response = await openai.images.generate(imageParams);
 
         return {
@@ -80,13 +80,12 @@ exports.handler = async function(event, context) {
         };
 
     } catch (error) {
-        console.error('Errore dettagliato da OpenAI:', JSON.stringify(error, null, 2));
+        console.error('Errore nella funzione generate_image:', error);
         return {
             statusCode: 500,
             headers,
             body: JSON.stringify({
-                error: 'Errore del server durante la generazione dell\'immagine.',
-                details: error.message
+                error: error.message || 'Errore nella generazione dell\'immagine'
             })
         };
     }
