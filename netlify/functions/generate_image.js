@@ -64,6 +64,7 @@ exports.handler = async function(event, context) {
             imageParams.quality = quality;
         }
 
+        console.log('Invio richiesta a OpenAI con i seguenti parametri:', imageParams);
         const response = await openai.images.generate(imageParams);
 
         return {
@@ -79,12 +80,13 @@ exports.handler = async function(event, context) {
         };
 
     } catch (error) {
-        console.error('Errore nella funzione generate_image:', error);
+        console.error('Errore dettagliato da OpenAI:', JSON.stringify(error, null, 2));
         return {
             statusCode: 500,
             headers,
             body: JSON.stringify({
-                error: error.message || 'Errore nella generazione dell\'immagine'
+                error: 'Errore del server durante la generazione dell\'immagine.',
+                details: error.message
             })
         };
     }
