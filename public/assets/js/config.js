@@ -12,7 +12,7 @@ export const DEFAULT_CONFIG = {
 
 let currentConfig = { ...DEFAULT_CONFIG };
 
-function saveConfigToLocalStorage() {
+export function saveConfigToLocalStorage() {
     try {
         localStorage.setItem('chatAppConfig', JSON.stringify(currentConfig));
         console.log('Configurazione salvata in localStorage.');
