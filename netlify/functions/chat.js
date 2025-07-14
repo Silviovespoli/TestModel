@@ -2,10 +2,15 @@
 const { OpenAI } = require('openai');
 const Anthropic = require('@anthropic-ai/sdk');
 
-// Rate limiting store (in-memory per instance)
-const requestCounts = new Map();
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minuto
-const RATE_LIMIT_MAX_REQUESTS = 10; // Max 10 richieste per minuto per IP
+const { Ratelimit } = require('@upstash/ratelimit');
+const { Redis } = require('@upstash/redis');
+
+// Inizializza il rate limiter (10 richieste ogni 60 secondi per IP)
+const ratelimit = new Ratelimit({
+    redis: Redis.fromEnv(),
+    limiter: Ratelimit.slidingWindow(10, '60 s'),
+    analytics: true,
+});
 
 // Funzione per validare i parametri di input
 function validateInputs(config, messages) {
@@ -75,41 +80,21 @@ function validateInputs(config, messages) {
     return errors;
 }
 
-// Funzione per rate limiting
-function checkRateLimit(clientIp) {
-    const now = Date.now();
-    const windowStart = now - RATE_LIMIT_WINDOW;
-    
-    // Pulisci vecchie entries
-    for (const [ip, timestamps] of requestCounts.entries()) {
-        const validTimestamps = timestamps.filter(ts => ts > windowStart);
-        if (validTimestamps.length === 0) {
-            requestCounts.delete(ip);
-        } else {
-            requestCounts.set(ip, validTimestamps);
-        }
-    }
-    
-    // Controlla rate limit per questo IP
-    const timestamps = requestCounts.get(clientIp) || [];
-    const validTimestamps = timestamps.filter(ts => ts > windowStart);
-    
-    if (validTimestamps.length >= RATE_LIMIT_MAX_REQUESTS) {
-        return false;
-    }
-    
-    // Aggiungi timestamp corrente
-    validTimestamps.push(now);
-    requestCounts.set(clientIp, validTimestamps);
-    
-    return true;
-}
 
-exports.handler = async function(event, context) {
+// Funzione per determinare l'origine consentita
+const getAllowedOrigin = () => {
+    const netlifyUrl = process.env.URL; // URL del sito Netlify
+    const netlifySiteUrl = process.env.SITE_URL; // URL primario del sito
+    // In sviluppo, consenti localhost. In produzione, solo l'URL del sito.
+    return process.env.NETLIFY_DEV ? 'http://localhost:8888' : (netlifySiteUrl || netlifyUrl);
+};
+
+exports.handler = async function(event) {
+    const allowedOrigin = getAllowedOrigin();
     // Headers per CORS e performance
     const headers = {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': allowedOrigin,
         'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
         'Cache-Control': 'no-cache, no-store, must-revalidate'
@@ -128,28 +113,26 @@ exports.handler = async function(event, context) {
     }
 
     try {
-        // Rate limiting
-        const clientIp = event.headers['x-forwarded-for'] ||
-                         event.headers['x-real-ip'] ||
-                         '127.0.0.1';
-        
-        if (!checkRateLimit(clientIp)) {
+        // Applica il rate limiting basato sull'IP del client
+        const ip = event.headers['x-nf-client-connection-ip'] || '127.0.0.1';
+        const { success, limit, remaining, reset } = await ratelimit.limit(ip);
+
+        if (!success) {
             return {
                 statusCode: 429,
-                headers,
-                body: JSON.stringify({
-                    error: 'Rate limit superato. Riprova tra qualche minuto.'
-                })
+                headers: {
+                    ...headers,
+                    'X-RateLimit-Limit': limit,
+                    'X-RateLimit-Remaining': remaining,
+                    'X-RateLimit-Reset': reset,
+                },
+                body: JSON.stringify({ error: 'Troppe richieste. Riprova più tardi.' })
             };
         }
 
         const requestBody = JSON.parse(event.body);
         const { config = {}, messages = [] } = requestBody;
         
-        // Debug logging
-        console.log('Received request body:', JSON.stringify(requestBody, null, 2));
-        console.log('Config received:', config);
-        console.log('Messages received:', messages);
         
         // Validazione rigorosa degli input
         const validationErrors = validateInputs(config, messages);

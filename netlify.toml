@@ -89,14 +89,14 @@
   status = 200
 
 # Plugin per ottimizzazioni (opzionali - rimuovere se causano problemi)
-# [[plugins]]
-#   package = "@netlify/plugin-lighthouse"
-#   
-#   [plugins.inputs]
-#     output_path = "reports/lighthouse.html"
-#     
-# [[plugins]]
-#   package = "netlify-plugin-minify-html"
-#   
-#   [plugins.inputs]
-#     contexts = ["production"]
+[[plugins]]
+  package = "@netlify/plugin-lighthouse"
+  
+  [plugins.inputs]
+    output_path = "reports/lighthouse.html"
+    
+[[plugins]]
+  package = "netlify-plugin-minify-html"
+  
+  [plugins.inputs]
+    contexts = ["production"]

@@ -14,7 +14,9 @@ let currentConfig = { ...DEFAULT_CONFIG };
 
 export function saveConfigToLocalStorage() {
     try {
-        localStorage.setItem('chatAppConfig', JSON.stringify(currentConfig));
+        const configToSave = { ...currentConfig };
+        delete configToSave.api_key; // Rimuovi sempre la API key prima di salvare
+        localStorage.setItem('chatAppConfig', JSON.stringify(configToSave));
         console.log('Configurazione salvata in localStorage.');
     } catch (e) {
         console.error('Errore nel salvataggio della configurazione:', e);

@@ -18,7 +18,6 @@ const newChatButton = document.getElementById('new-chat-button');
 const generateImageButton = document.getElementById('generate-image-button');
 
 const endpointUrlInput = document.getElementById('endpoint_url');
-const apiKeyInput = document.getElementById('api_key');
 const providerNameSelect = document.getElementById('provider_name');
 const modelNameSelect = document.getElementById('model_name');
 const modelTypeSelect = document.getElementById('model_type');
@@ -125,9 +124,6 @@ async function sendMessage() {
             content: msg.content
         }));
 
-        // Debug logging
-        console.log('Sending chat request with config:', cleanConfig);
-        console.log('Sending chat request with messages:', cleanMessages);
         
         // Verifica configurazione
         if (!cleanConfig.provider) {

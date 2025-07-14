@@ -3,6 +3,7 @@
   "version": "1.0.1",
   "description": "Chat AI avanzata - Netlify Static Site con Functions serverless per OpenAI e Anthropic",
   "main": "public/index.html",
+  "type": "module",
   "scripts": {
     "dev": "netlify dev",
     "build": "echo 'Installing function dependencies...' && cd netlify/functions && npm install && cd ../.. && echo 'Verifica integrità files...' && npm run lint && npm run test && echo 'Build completato - progetto pronto per deploy Netlify'",
@@ -10,19 +11,21 @@
     "start": "netlify dev",
     "deploy": "netlify deploy",
     "deploy:prod": "netlify deploy --prod",
-    "lint": "echo 'Linting JavaScript files...' && find public/assets/js -name '*.js' -exec node -c {} \\;",
-    "test": "echo 'Testing configuration...' && node -e \"console.log('✓ Package.json valido')\" && node -e \"console.log('✓ Netlify Functions OK')\"",
+    "lint": "eslint . --ext .js --report-unused-disable-directives --max-warnings 0",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "serve": "npx http-server public -p 8080 -c-1",
     "functions:dev": "netlify functions:serve",
     "clean": "rm -rf .netlify"
   },
   "dependencies": {
-    "openai": "^4.20.1",
-    "@anthropic-ai/sdk": "^0.9.1"
+    "@anthropic-ai/sdk": "^0.9.1",
+    "openai": "^4.20.1"
   },
   "devDependencies": {
-    "netlify-cli": "^17.10.1",
-    "http-server": "^14.1.1"
+    "eslint": "^9.31.0",
+    "http-server": "^14.1.1",
+    "jest": "^30.0.4",
+    "netlify-cli": "^17.10.1"
   },
   "keywords": [
     "chat",
