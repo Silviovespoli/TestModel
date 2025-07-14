@@ -188,7 +188,6 @@ export function renderChatSessions(sessions, currentChatId) {
 
 export function updateConfigUI(config) {
     document.getElementById('endpoint_url').value = config.base_url;
-    document.getElementById('api_key').value = config.api_key; // Display for local endpoints
     document.getElementById('provider_name').value = config.provider;
     document.getElementById('model_name').value = config.model;
     document.getElementById('temperature').value = config.temperature;
